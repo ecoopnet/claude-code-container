@@ -87,6 +87,24 @@ claude-container ~/my-project
 - **設定永続化**: コンテナ内での設定変更がローカルに保存
 - **多言語対応**: 日本語環境では日本語、それ以外では英語で表示
 - **柔軟な引数処理**: ワークスペース省略可能、`--`区切りでClaudeオプション指定
+- **コンテナランタイム検出**: macOSでは`container`コマンド（利用可能な場合）、その他では`docker`を自動使用
+
+## コンテナランタイム
+
+スクリプトは適切なコンテナランタイムを自動検出して使用します：
+
+- **macOS**: `container`コマンドが利用可能な場合はそれを使用、そうでなければ`docker`にフォールバック
+- **その他のプラットフォーム**: `docker`コマンドを使用
+
+`CONTAINER_RUNTIME`環境変数を設定することで、コンテナランタイムを上書きできます：
+
+```bash
+# dockerの使用を強制
+CONTAINER_RUNTIME=docker claude-container
+
+# containerの使用を強制（macOS）
+CONTAINER_RUNTIME=container claude-container
+```
 
 ## 参考
 

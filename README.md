@@ -91,6 +91,24 @@ claude-container ~/my-project
 - **Configuration Persistence**: Changes made inside container are saved locally
 - **Multi-language Support**: Japanese in Japanese environments, English otherwise
 - **Flexible Argument Processing**: Optional workspace specification, `--` delimiter for Claude options
+- **Container Runtime Detection**: Automatically uses `container` on macOS (if available) or `docker` elsewhere
+
+#### Container Runtime
+
+The script automatically detects and uses the appropriate container runtime:
+
+- **macOS**: Uses `container` command if available, otherwise falls back to `docker`
+- **Other platforms**: Uses `docker` command
+
+You can override the container runtime by setting the `CONTAINER_RUNTIME` environment variable:
+
+```bash
+# Force use of docker
+CONTAINER_RUNTIME=docker claude-container
+
+# Force use of container (macOS)
+CONTAINER_RUNTIME=container claude-container
+```
 
 #### Reference
 

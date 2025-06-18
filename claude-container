@@ -3,6 +3,37 @@
 # Get the directory where the script is located (supports symbolic links)
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")" && pwd)"
 
+# Detect language setting early for error messages
+detect_language() {
+    if [[ "$LANG" =~ ^ja ]]; then
+        echo "ja"
+    else
+        echo "en"
+    fi
+}
+
+LANG_CODE=$(detect_language)
+
+# Detect container runtime
+detect_container_runtime() {
+    # Check if running on macOS and container command is available
+    if [[ "$OSTYPE" == "darwin"* ]] && command -v container >/dev/null 2>&1; then
+        echo "container"
+    elif command -v docker >/dev/null 2>&1; then
+        echo "docker"
+    else
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "エラー: DockerまたはContainer runtimeが見つかりません" >&2
+        else
+            echo "Error: Docker or Container runtime not found" >&2
+        fi
+        exit 1
+    fi
+}
+
+# Set container runtime command (can be overridden via environment variable)
+CONTAINER_CMD="${CONTAINER_RUNTIME:-$(detect_container_runtime)}"
+
 # Detect local timezone
 detect_timezone() {
     # Use TZ environment variable if set
@@ -88,17 +119,6 @@ detect_timezone() {
 
 # Detect timezone
 LOCAL_TZ=$(detect_timezone)
-
-# Detect language setting
-detect_language() {
-    if [[ "$LANG" =~ ^ja ]]; then
-        echo "ja"
-    else
-        echo "en"
-    fi
-}
-
-LANG_CODE=$(detect_language)
 
 # Parse arguments
 WORKSPACE_PATH=""
@@ -207,11 +227,13 @@ CONTAINER_NAME="claude-code-$(echo "$WORKSPACE_PATH" | sed 's/[^a-zA-Z0-9]/-/g' 
 
 if [ "$LANG_CODE" = "ja" ]; then
     echo "Claude Code Container を起動しています..."
+    echo "コンテナランタイム: $CONTAINER_CMD"
     echo "ワークスペース: $WORKSPACE_PATH"
     echo "コンテナ名: $CONTAINER_NAME"
     echo "タイムゾーン: $LOCAL_TZ"
 else
     echo "Starting Claude Code Container..."
+    echo "Container runtime: $CONTAINER_CMD"
     echo "Workspace: $WORKSPACE_PATH"
     echo "Container name: $CONTAINER_NAME"
     echo "Timezone: $LOCAL_TZ"
@@ -220,8 +242,8 @@ fi
 # Mount entire docker folder
 MOUNT_OPTIONS="-v \"$SCRIPT_DIR/docker:/home/node\""
 
-# Execute Docker container
-eval "container run -it --rm \
+# Execute container
+eval "$CONTAINER_CMD run -it --rm \
     --name \"$CONTAINER_NAME\" \
     $MOUNT_OPTIONS \
     -v \"$WORKSPACE_PATH:/workspace\" \
