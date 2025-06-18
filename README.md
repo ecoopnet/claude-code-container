@@ -169,6 +169,12 @@ alias g="git"' >> docker/.zshrc
 
 This makes the container environment feel like your local development setup!
 
+#### Demo
+
+![Demo Animation](sample.gif)
+
+*Animation showing Claude Code Container in action*
+
 #### Features
 
 - **Zero Manual Setup**: Automatically builds container image on first run
