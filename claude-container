@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# スクリプトのあるディレクトリを取得
+SCRIPT_DIR="/opt/ai-agents/claude-code-container"
+
+# 引数チェック
+if [ $# -eq 0 ]; then
+    echo "使用方法: claude-container <workspace-path>"
+    echo "例: claude-container ."
+    echo "例: claude-container /path/to/project"
+    exit 1
+fi
+
+# ワークスペースパスを絶対パスに変換
+WORKSPACE_PATH=$(realpath "$1")
+
+if [ ! -d "$WORKSPACE_PATH" ]; then
+    echo "エラー: ディレクトリが存在しません: $WORKSPACE_PATH"
+    exit 1
+fi
+
+# Dockerイメージ名
+IMAGE_NAME="claude-code"
+
+# コンテナ名（ワークスペースパスから生成）
+CONTAINER_NAME="claude-code-$(echo "$WORKSPACE_PATH" | sed 's/[^a-zA-Z0-9]/-/g' | tail -c 50)"
+
+echo "ワークスペース: $WORKSPACE_PATH"
+echo "コンテナ名: $CONTAINER_NAME"
+
+# Dockerコンテナを実行
+container run -it --rm \
+    --name "$CONTAINER_NAME" \
+    -v "$SCRIPT_DIR/.claude:/home/node/.claude" \
+    -v "$WORKSPACE_PATH:/workspace" \
+    -e TZ="${TZ:-Asia/Tokyo}" \
+    --workdir /workspace \
+    "$IMAGE_NAME" claude
