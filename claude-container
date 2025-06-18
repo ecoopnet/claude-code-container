@@ -59,6 +59,7 @@ container run -it --rm \
     --name "$CONTAINER_NAME" \
     -v "$SCRIPT_DIR/.claude:/home/node/.claude" \
     -v "$WORKSPACE_PATH:/workspace" \
+    -e HOME=/home/node \
     -e TZ="${TZ:-Asia/Tokyo}" \
     --workdir /workspace \
     "$IMAGE_NAME" claude $DANGEROUS_MODE $CLAUDE_ARGS
