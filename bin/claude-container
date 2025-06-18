@@ -270,13 +270,19 @@ build_image() {
     if [ ! -f "$SCRIPT_DIR/Dockerfile" ]; then
         if [ "$LANG_CODE" = "ja" ]; then
             echo "エラー: Dockerfileが見つかりません: $SCRIPT_DIR/Dockerfile"
+            echo "デバッグ: SCRIPT_DIR=$SCRIPT_DIR"
+            echo "デバッグ: PWD=$(pwd)"
         else
             echo "Error: Dockerfile not found: $SCRIPT_DIR/Dockerfile"
+            echo "Debug: SCRIPT_DIR=$SCRIPT_DIR"
+            echo "Debug: PWD=$(pwd)"
         fi
         exit 1
     fi
     
-    $CONTAINER_CMD build -t "$IMAGE_NAME" "$SCRIPT_DIR"
+    # Change to SCRIPT_DIR before building to ensure correct context
+    cd "$SCRIPT_DIR"
+    $CONTAINER_CMD build -t "$IMAGE_NAME" .
     if [ $? -ne 0 ]; then
         if [ "$LANG_CODE" = "ja" ]; then
             echo "エラー: コンテナイメージのビルドに失敗しました"
