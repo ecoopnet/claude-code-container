@@ -89,6 +89,17 @@ detect_timezone() {
 # タイムゾーンを検出
 LOCAL_TZ=$(detect_timezone)
 
+# 言語設定を検出
+detect_language() {
+    if [[ "$LANG" =~ ^ja ]]; then
+        echo "ja"
+    else
+        echo "en"
+    fi
+}
+
+LANG_CODE=$(detect_language)
+
 # 引数解析
 WORKSPACE_PATH=""
 CLAUDE_ARGS=""
@@ -135,24 +146,55 @@ fi
 
 # 使用方法を表示する関数
 show_usage() {
-    echo "使用方法: claude-container [workspace] [-- claude-options...]"
-    echo "例: claude-container                                    # カレントディレクトリを使用"
-    echo "例: claude-container .                                  # カレントディレクトリを使用"
-    echo "例: claude-container /path/to/project                   # 指定ディレクトリを使用"
-    echo "例: claude-container -- --model claude-3-opus-20240229 # カレントディレクトリ + claudeオプション"
-    echo "例: claude-container . -- --verbose                    # カレントディレクトリ + claudeオプション"
-    echo "例: claude-container /path -- --model claude-3-opus    # 指定ディレクトリ + claudeオプション"
-    echo "例: claude-container --help                            # claudeに直接渡される"
+    if [ "$LANG_CODE" = "ja" ]; then
+        echo "使用方法: claude-container [ワークスペース] [-- claudeオプション...]"
+        echo ""
+        echo "基本的な使用例:"
+        echo "   claude-container                                     # カレントディレクトリを使用"
+        echo "   claude-container .                                   # カレントディレクトリを明示"
+        echo "   claude-container /path/to/project                    # 指定ディレクトリを使用"
+        echo ""
+        echo "Claudeオプション付きの使用例:"
+        echo "   claude-container -- --model claude-3-opus-20240229  # カレントディレクトリ + claudeオプション"
+        echo "   claude-container . -- --verbose                     # カレントディレクトリ + claudeオプション"
+        echo "   claude-container /path -- --model claude-3-opus     # 指定ディレクトリ + claudeオプション"
+        echo "   claude-container --help                             # claudeのヘルプを表示"
+    else
+        echo "Usage: claude-container [workspace] [-- claude-options...]"
+        echo ""
+        echo "Basic usage examples:"
+        echo "   claude-container                                     # Use current directory"
+        echo "   claude-container .                                   # Use current directory explicitly"
+        echo "   claude-container /path/to/project                    # Use specified directory"
+        echo ""
+        echo "Usage with Claude options:"
+        echo "   claude-container -- --model claude-3-opus-20240229  # Current directory + Claude options"
+        echo "   claude-container . -- --verbose                     # Current directory + Claude options"
+        echo "   claude-container /path -- --model claude-3-opus     # Specified directory + Claude options"
+        echo "   claude-container --help                             # Show Claude help"
+    fi
 }
 
 if [ ! -d "$WORKSPACE_PATH" ]; then
-    echo "エラー: ディレクトリが存在しません: $WORKSPACE_PATH"
+    if [ "$LANG_CODE" = "ja" ]; then
+        echo "エラー: ディレクトリが存在しません: $WORKSPACE_PATH"
+    else
+        echo "Error: Directory does not exist: $WORKSPACE_PATH"
+    fi
+    echo ""
+    show_usage
     exit 1
 fi
 
 # ワークスペースパスが実際にディレクトリかどうか確認
 if [ ! -r "$WORKSPACE_PATH" ]; then
-    echo "エラー: ディレクトリにアクセスできません: $WORKSPACE_PATH"
+    if [ "$LANG_CODE" = "ja" ]; then
+        echo "エラー: ディレクトリにアクセスできません: $WORKSPACE_PATH"
+        echo "権限を確認してください。"
+    else
+        echo "Error: Cannot access directory: $WORKSPACE_PATH"
+        echo "Please check permissions."
+    fi
     exit 1
 fi
 
@@ -163,9 +205,17 @@ IMAGE_NAME="claude-code"
 TIMESTAMP=$(date +%s)
 CONTAINER_NAME="claude-code-$(echo "$WORKSPACE_PATH" | sed 's/[^a-zA-Z0-9]/-/g' | tail -c 40)-$TIMESTAMP"
 
-echo "ワークスペース: $WORKSPACE_PATH"
-echo "コンテナ名: $CONTAINER_NAME"
-echo "タイムゾーン: $LOCAL_TZ"
+if [ "$LANG_CODE" = "ja" ]; then
+    echo "Claude Code Container を起動しています..."
+    echo "ワークスペース: $WORKSPACE_PATH"
+    echo "コンテナ名: $CONTAINER_NAME"
+    echo "タイムゾーン: $LOCAL_TZ"
+else
+    echo "Starting Claude Code Container..."
+    echo "Workspace: $WORKSPACE_PATH"
+    echo "Container name: $CONTAINER_NAME"
+    echo "Timezone: $LOCAL_TZ"
+fi
 # dockerフォルダを丸ごとマウント
 MOUNT_OPTIONS="-v \"$SCRIPT_DIR/docker:/home/node\""
 
