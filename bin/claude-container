@@ -361,11 +361,29 @@ fi
 # Show symlink hint if running directly (not via symlink)
 show_symlink_hint
 
+# Function to cleanup container on exit
+cleanup_container() {
+    if [ -n "$CONTAINER_NAME" ]; then
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "コンテナを停止しています..."
+        else
+            echo "Stopping container..."
+        fi
+        $CONTAINER_CMD stop "$CONTAINER_NAME" >/dev/null 2>&1
+        $CONTAINER_CMD rm "$CONTAINER_NAME" >/dev/null 2>&1
+    fi
+}
+
+# Set up signal handlers to cleanup container on interruption
+trap cleanup_container EXIT
+trap cleanup_container INT
+trap cleanup_container TERM
+
 # Mount entire docker folder
 MOUNT_OPTIONS="-v \"$SCRIPT_DIR/docker:/home/node\""
 
 # Execute container
-eval "$CONTAINER_CMD run -it --rm \
+eval "$CONTAINER_CMD run -it \
     --name \"$CONTAINER_NAME\" \
     $MOUNT_OPTIONS \
     -v \"$WORKSPACE_PATH:/workspace\" \
@@ -373,3 +391,6 @@ eval "$CONTAINER_CMD run -it --rm \
     -e TZ=\"$LOCAL_TZ\" \
     --workdir /workspace \
     \"$IMAGE_NAME\" claude $CLAUDE_ARGS"
+
+# Cleanup after normal exit
+cleanup_container
