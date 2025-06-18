@@ -89,42 +89,61 @@ detect_timezone() {
 # タイムゾーンを検出
 LOCAL_TZ=$(detect_timezone)
 
-# デフォルト値
-DANGEROUS_MODE=""
+# 引数解析
+WORKSPACE_PATH=""
+CLAUDE_ARGS=""
 
-# オプション解析
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -x)
-            DANGEROUS_MODE="--dangerously-skip-permissions"
-            shift
-            ;;
-        *)
-            break
-            ;;
-    esac
+# -- の位置を探す
+DOUBLE_DASH_POS=-1
+for i in $(seq 1 $#); do
+    if [ "${!i}" = "--" ]; then
+        DOUBLE_DASH_POS=$i
+        break
+    fi
 done
 
-# 引数チェック
-if [ $# -eq 0 ]; then
-    echo "使用方法: claude-container [-x] <workspace-path> [claude-options...]"
-    echo "例: claude-container ."
-    echo "例: claude-container -x /path/to/project"
-    echo "例: claude-container /path/to/project --model claude-3-opus-20240229"
-    echo "例: claude-container -x /path/to/project --verbose --model claude-3-opus-20240229"
-    echo ""
-    echo "オプション:"
-    echo "  -x                  --dangerously-skip-permissionsオプションを付与"
-    echo "  claude-options...   ワークスペースパスの後の引数はすべてclaudeに渡されます"
-    exit 1
+if [ $DOUBLE_DASH_POS -gt 0 ]; then
+    # -- が見つかった場合
+    if [ $DOUBLE_DASH_POS -eq 1 ]; then
+        # 最初の引数が -- の場合、ワークスペースはカレントディレクトリ
+        WORKSPACE_PATH=$(pwd)
+        shift # -- を削除
+        CLAUDE_ARGS="$@"
+    else
+        # -- より前の引数をワークスペースとして扱う（最初の1つだけ）
+        WORKSPACE_PATH=$(realpath "$1")
+        shift $DOUBLE_DASH_POS # -- まで削除
+        CLAUDE_ARGS="$@"
+    fi
+else
+    # -- がない場合
+    if [ $# -eq 0 ]; then
+        # 引数なし：カレントディレクトリを使用
+        WORKSPACE_PATH=$(pwd)
+        CLAUDE_ARGS=""
+    elif [ -d "$1" ] || [ "$1" = "." ]; then
+        # 最初の引数がディレクトリの場合
+        WORKSPACE_PATH=$(realpath "$1")
+        shift
+        CLAUDE_ARGS="$@"
+    else
+        # 最初の引数がディレクトリでない場合、カレントディレクトリを使用
+        WORKSPACE_PATH=$(pwd)
+        CLAUDE_ARGS="$@"
+    fi
 fi
 
-# ワークスペースパスを絶対パスに変換
-WORKSPACE_PATH=$(realpath "$1")
-shift
-
-# 残りの引数をclaudeに渡す
-CLAUDE_ARGS="$@"
+# 使用方法を表示する関数
+show_usage() {
+    echo "使用方法: claude-container [workspace] [-- claude-options...]"
+    echo "例: claude-container                                    # カレントディレクトリを使用"
+    echo "例: claude-container .                                  # カレントディレクトリを使用"
+    echo "例: claude-container /path/to/project                   # 指定ディレクトリを使用"
+    echo "例: claude-container -- --model claude-3-opus-20240229 # カレントディレクトリ + claudeオプション"
+    echo "例: claude-container . -- --verbose                    # カレントディレクトリ + claudeオプション"
+    echo "例: claude-container /path -- --model claude-3-opus    # 指定ディレクトリ + claudeオプション"
+    echo "例: claude-container --help                            # claudeに直接渡される"
+}
 
 if [ ! -d "$WORKSPACE_PATH" ]; then
     echo "エラー: ディレクトリが存在しません: $WORKSPACE_PATH"
@@ -159,4 +178,4 @@ eval "container run -it --rm \
     -e HOME=/home/node \
     -e TZ=\"$LOCAL_TZ\" \
     --workdir /workspace \
-    \"$IMAGE_NAME\" claude $DANGEROUS_MODE $CLAUDE_ARGS"
+    \"$IMAGE_NAME\" claude $CLAUDE_ARGS"
