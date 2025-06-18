@@ -3,6 +3,92 @@
 # スクリプトのあるディレクトリを取得
 SCRIPT_DIR="/opt/ai-agents/claude-code-container"
 
+# ローカルのタイムゾーンを検出
+detect_timezone() {
+    # 環境変数TZが設定されていればそれを使用
+    if [ -n "$TZ" ]; then
+        echo "$TZ"
+        return
+    fi
+    
+    # Windows (Git Bash/MSYS2)の場合
+    if [ -n "$MSYSTEM" ] || [ -n "$MINGW_PREFIX" ]; then
+        # Windowsのタイムゾーン情報を取得
+        if command -v tzutil.exe >/dev/null 2>&1; then
+            local win_tz=$(tzutil.exe /g 2>/dev/null | tr -d '\r')
+            # Windows タイムゾーンをIANAタイムゾーンに変換（主要なものだけ）
+            case "$win_tz" in
+                "Pacific Standard Time") echo "America/Los_Angeles" ;;
+                "Mountain Standard Time") echo "America/Denver" ;;
+                "Central Standard Time") echo "America/Chicago" ;;
+                "Eastern Standard Time") echo "America/New_York" ;;
+                "GMT Standard Time") echo "Europe/London" ;;
+                "Central Europe Standard Time") echo "Europe/Berlin" ;;
+                "Tokyo Standard Time") echo "Asia/Tokyo" ;;
+                "China Standard Time") echo "Asia/Shanghai" ;;
+                "India Standard Time") echo "Asia/Kolkata" ;;
+                "AUS Eastern Standard Time") echo "Australia/Sydney" ;;
+                *) echo "UTC" ;;
+            esac
+            return
+        fi
+    fi
+    
+    # WSLの場合
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        # WSLはLinuxと同じ方法で検出
+        if [ -f /etc/timezone ]; then
+            local tz=$(cat /etc/timezone 2>/dev/null)
+            if [ -n "$tz" ]; then
+                echo "$tz"
+                return
+            fi
+        fi
+    fi
+    
+    # macOSの場合
+    if [ -f /etc/localtime ] && [ -L /etc/localtime ]; then
+        local tz=$(readlink /etc/localtime | sed 's|/var/db/timezone/zoneinfo/||' 2>/dev/null)
+        if [ -n "$tz" ]; then
+            echo "$tz"
+            return
+        fi
+    fi
+    
+    # Linuxの場合（timedatectl）
+    if command -v timedatectl >/dev/null 2>&1; then
+        local tz=$(timedatectl show --property=Timezone --value 2>/dev/null)
+        if [ -n "$tz" ]; then
+            echo "$tz"
+            return
+        fi
+    fi
+    
+    # Linuxの場合（/etc/localtime）
+    if [ -f /etc/localtime ] && [ -L /etc/localtime ]; then
+        local tz=$(readlink /etc/localtime | sed 's|/usr/share/zoneinfo/||' 2>/dev/null)
+        if [ -n "$tz" ]; then
+            echo "$tz"
+            return
+        fi
+    fi
+    
+    # /etc/timezoneファイルから取得
+    if [ -f /etc/timezone ]; then
+        local tz=$(cat /etc/timezone 2>/dev/null)
+        if [ -n "$tz" ]; then
+            echo "$tz"
+            return
+        fi
+    fi
+    
+    # デフォルトはUTC
+    echo "UTC"
+}
+
+# タイムゾーンを検出
+LOCAL_TZ=$(detect_timezone)
+
 # デフォルト値
 DANGEROUS_MODE=""
 
@@ -53,6 +139,7 @@ CONTAINER_NAME="claude-code-$(echo "$WORKSPACE_PATH" | sed 's/[^a-zA-Z0-9]/-/g' 
 
 echo "ワークスペース: $WORKSPACE_PATH"
 echo "コンテナ名: $CONTAINER_NAME"
+echo "タイムゾーン: $LOCAL_TZ"
 
 # Dockerコンテナを実行
 container run -it --rm \
@@ -61,6 +148,6 @@ container run -it --rm \
     -v "$SCRIPT_DIR/.claude.json:/home/node/.claude.json" \
     -v "$WORKSPACE_PATH:/workspace" \
     -e HOME=/home/node \
-    -e TZ="${TZ:-Asia/Tokyo}" \
+    -e TZ="$LOCAL_TZ" \
     --workdir /workspace \
     "$IMAGE_NAME" claude $DANGEROUS_MODE $CLAUDE_ARGS
