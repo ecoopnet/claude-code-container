@@ -3,16 +3,42 @@
 # スクリプトのあるディレクトリを取得
 SCRIPT_DIR="/opt/ai-agents/claude-code-container"
 
+# デフォルト値
+DANGEROUS_MODE=""
+
+# オプション解析
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -x)
+            DANGEROUS_MODE="--dangerously-skip-permissions"
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
 # 引数チェック
 if [ $# -eq 0 ]; then
-    echo "使用方法: claude-container <workspace-path>"
+    echo "使用方法: claude-container [-x] <workspace-path> [claude-options...]"
     echo "例: claude-container ."
-    echo "例: claude-container /path/to/project"
+    echo "例: claude-container -x /path/to/project"
+    echo "例: claude-container /path/to/project --model claude-3-opus-20240229"
+    echo "例: claude-container -x /path/to/project --verbose --model claude-3-opus-20240229"
+    echo ""
+    echo "オプション:"
+    echo "  -x                  --dangerously-skip-permissionsオプションを付与"
+    echo "  claude-options...   ワークスペースパスの後の引数はすべてclaudeに渡されます"
     exit 1
 fi
 
 # ワークスペースパスを絶対パスに変換
 WORKSPACE_PATH=$(realpath "$1")
+shift
+
+# 残りの引数をclaudeに渡す
+CLAUDE_ARGS="$@"
 
 if [ ! -d "$WORKSPACE_PATH" ]; then
     echo "エラー: ディレクトリが存在しません: $WORKSPACE_PATH"
@@ -35,4 +61,4 @@ container run -it --rm \
     -v "$WORKSPACE_PATH:/workspace" \
     -e TZ="${TZ:-Asia/Tokyo}" \
     --workdir /workspace \
-    "$IMAGE_NAME" claude
+    "$IMAGE_NAME" claude $DANGEROUS_MODE $CLAUDE_ARGS
