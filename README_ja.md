@@ -1,5 +1,9 @@
 # Claude Code Container
 
+[English](README.md) | [日本語](#日本語)
+
+## 日本語
+
 Dockerコンテナ内でClaude Codeを実行するためのツールです。
 
 ## セットアップ
@@ -102,10 +106,68 @@ claude-code-container/
 │   └── claude-container    # メイン実行スクリプト
 ├── docker/                 # 設定ファイル（自動作成）
 │   ├── .claude/           # Claude設定
-│   └── .claude.json       # Claude設定ファイル
+│   ├── .claude.json       # Claude設定ファイル
+│   ├── .gitconfig         # Git設定（オプション）
+│   ├── .npmrc             # npm設定（オプション）
+│   └── ...                # その他のホームディレクトリファイル
 ├── Dockerfile             # コンテナイメージ定義
 └── README.md              # ドキュメント
 ```
+
+### dockerディレクトリについて
+
+`docker/`ディレクトリは、コンテナ内のホームディレクトリ（`/home/node`）としてマウントされます。これにより以下のことが可能です：
+
+- **永続的なGit設定**: `.gitconfig`ファイルを配置してgit設定を維持
+- **SSHキー**: `.ssh/`ディレクトリを保存してgit認証に使用
+- **NPM設定**: `.npmrc`でnpmレジストリ設定を追加
+- **シェル設定**: `.bashrc`、`.zshrc`でパーソナライズされたシェル環境を構築
+- **ツール設定**: 各種開発ツールの設定ファイルを保存
+
+**追加可能な設定例:**
+
+```bash
+# Git認証情報と設定
+docker/.gitconfig
+docker/.ssh/id_rsa
+docker/.ssh/id_rsa.pub
+docker/.ssh/config
+
+# 開発ツール設定
+docker/.npmrc
+docker/.zshrc
+docker/.bashrc
+docker/.vimrc
+
+# アプリケーション固有の設定
+docker/.aws/credentials
+docker/.docker/config.json
+```
+
+`docker/`ディレクトリに配置されたすべてのファイルは、コンテナ内で利用可能で、実行間で永続化されます。
+
+**実用的な使用例:**
+
+```bash
+# git認証情報を設定
+echo '[user]
+    name = Your Name
+    email = your.email@example.com' > docker/.gitconfig
+
+# git認証用のSSHキーをコピー
+cp ~/.ssh/id_rsa docker/.ssh/
+cp ~/.ssh/id_rsa.pub docker/.ssh/
+chmod 600 docker/.ssh/id_rsa
+
+# プライベートレジストリ用のnpm設定
+echo 'registry=https://your-private-registry.com/' > docker/.npmrc
+
+# カスタムシェルエイリアスを追加
+echo 'alias ll="ls -la"
+alias g="git"' >> docker/.zshrc
+```
+
+これにより、コンテナ環境をローカル開発環境のように使いやすくできます！
 
 ## 機能
 

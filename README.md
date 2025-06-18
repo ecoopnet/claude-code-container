@@ -106,10 +106,68 @@ claude-code-container/
 │   └── claude-container    # Main executable script
 ├── docker/                 # Configuration files (auto-created)
 │   ├── .claude/           # Claude settings
-│   └── .claude.json       # Claude configuration
+│   ├── .claude.json       # Claude configuration
+│   ├── .gitconfig         # Git configuration (optional)
+│   ├── .npmrc             # npm configuration (optional)
+│   └── ...                # Any other home directory files
 ├── Dockerfile             # Container image definition
 └── README.md              # Documentation
 ```
+
+#### Docker Directory
+
+The `docker/` directory is mounted as the home directory (`/home/node`) inside the container. This allows you to:
+
+- **Persistent Git Configuration**: Place your `.gitconfig` file to maintain git settings
+- **SSH Keys**: Store `.ssh/` directory for git authentication
+- **NPM Configuration**: Add `.npmrc` for npm registry settings
+- **Shell Configuration**: Include `.bashrc`, `.zshrc` for personalized shell environment
+- **Tool Configurations**: Store configuration files for various development tools
+
+**Example configurations you can add:**
+
+```bash
+# Git credentials and configuration
+docker/.gitconfig
+docker/.ssh/id_rsa
+docker/.ssh/id_rsa.pub
+docker/.ssh/config
+
+# Development tool configurations
+docker/.npmrc
+docker/.zshrc
+docker/.bashrc
+docker/.vimrc
+
+# Application-specific settings
+docker/.aws/credentials
+docker/.docker/config.json
+```
+
+All files placed in the `docker/` directory will be available in the container and persist between runs.
+
+**Practical Usage Examples:**
+
+```bash
+# Set up git credentials
+echo '[user]
+    name = Your Name
+    email = your.email@example.com' > docker/.gitconfig
+
+# Copy your SSH key for git authentication
+cp ~/.ssh/id_rsa docker/.ssh/
+cp ~/.ssh/id_rsa.pub docker/.ssh/
+chmod 600 docker/.ssh/id_rsa
+
+# Configure npm for private registries
+echo 'registry=https://your-private-registry.com/' > docker/.npmrc
+
+# Add custom shell aliases
+echo 'alias ll="ls -la"
+alias g="git"' >> docker/.zshrc
+```
+
+This makes the container environment feel like your local development setup!
 
 #### Features
 
