@@ -86,7 +86,7 @@ The script supports symbolic links and can be executed from anywhere:
 
 ```bash
 # Create symbolic link in PATH directory
-sudo ln -s /opt/ai-agents/claude-code-container/claude-container /usr/local/bin/claude-container
+sudo ln -s /opt/ai-agents/claude-code-container/bin/claude-container /usr/local/bin/claude-container
 
 # Execute from anywhere
 cd ~/my-project
@@ -96,7 +96,20 @@ claude-container
 claude-container ~/my-project
 ```
 
-**Note**: Even when using symbolic links, configuration files (`.claude`, etc.) are automatically loaded from the `docker/` folder in the original script directory.
+**Note**: Even when using symbolic links, configuration files (`.claude`, etc.) are automatically loaded from the `docker/` folder in the project root directory.
+
+#### Project Structure
+
+```
+claude-code-container/
+├── bin/
+│   └── claude-container    # Main executable script
+├── docker/                 # Configuration files (auto-created)
+│   ├── .claude/           # Claude settings
+│   └── .claude.json       # Claude configuration
+├── Dockerfile             # Container image definition
+└── README.md              # Documentation
+```
 
 #### Features
 

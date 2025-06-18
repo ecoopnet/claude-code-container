@@ -82,7 +82,7 @@ claude-container --remove-container
 
 ```bash
 # PATHの通ったディレクトリにシンボリックリンクを作成
-sudo ln -s /opt/ai-agents/claude-code-container/claude-container /usr/local/bin/claude-container
+sudo ln -s /opt/ai-agents/claude-code-container/bin/claude-container /usr/local/bin/claude-container
 
 # どこからでも実行可能
 cd ~/my-project
@@ -92,7 +92,20 @@ claude-container
 claude-container ~/my-project
 ```
 
-**注意**: シンボリックリンクを使用しても、設定ファイル（`.claude`など）は元のスクリプトディレクトリ内の`docker/`フォルダから自動的に読み込まれます。
+**注意**: シンボリックリンクを使用しても、設定ファイル（`.claude`など）はプロジェクトルートの`docker/`フォルダから自動的に読み込まれます。
+
+### プロジェクト構造
+
+```
+claude-code-container/
+├── bin/
+│   └── claude-container    # メイン実行スクリプト
+├── docker/                 # 設定ファイル（自動作成）
+│   ├── .claude/           # Claude設定
+│   └── .claude.json       # Claude設定ファイル
+├── Dockerfile             # コンテナイメージ定義
+└── README.md              # ドキュメント
+```
 
 ## 機能
 
