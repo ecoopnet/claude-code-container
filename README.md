@@ -20,6 +20,15 @@ Dockerコンテナ内でClaude Codeを実行するためのツールです。
 claude-container [workspace] [-- claude-options...]
 ```
 
+### 引数の詳細
+
+- **workspace** (省略可能): 作業ディレクトリのパス
+  - 省略時: カレントディレクトリを使用
+  - `.`: カレントディレクトリを明示的に指定
+  - `/path/to/project`: 特定のディレクトリを指定
+- **--**: Claude オプションとの区切り文字
+- **claude-options**: Claude Code に直接渡されるオプション
+
 ### 基本的な使用例
 
 ```bash
@@ -47,7 +56,28 @@ claude-container /path/to/project -- --model claude-3-opus
 
 # Claudeのヘルプを表示
 claude-container --help
+
+# 危険な権限をスキップ
+claude-container -- --dangerously-skip-permissions
 ```
+
+### シンボリックリンクでの利用
+
+スクリプトはシンボリックリンクに対応しており、どこからでも実行できます：
+
+```bash
+# PATHの通ったディレクトリにシンボリックリンクを作成
+sudo ln -s /opt/ai-agents/claude-code-container/claude-container /usr/local/bin/claude-container
+
+# どこからでも実行可能
+cd ~/my-project
+claude-container
+
+# または別の場所から
+claude-container ~/my-project
+```
+
+**注意**: シンボリックリンクを使用しても、設定ファイル（`.claude`など）は元のスクリプトディレクトリ内の`docker/`フォルダから自動的に読み込まれます。
 
 ## 機能
 
@@ -55,6 +85,8 @@ claude-container --help
 - **タイムゾーン検出**: ローカル環境のタイムゾーンを自動検出（Windows/macOS/Linux対応）
 - **シンボリックリンク対応**: スクリプトをどこに配置・リンクしても動作
 - **設定永続化**: コンテナ内での設定変更がローカルに保存
+- **多言語対応**: 日本語環境では日本語、それ以外では英語で表示
+- **柔軟な引数処理**: ワークスペース省略可能、`--`区切りでClaudeオプション指定
 
 ## 参考
 
