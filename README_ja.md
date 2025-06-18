@@ -17,8 +17,13 @@ Dockerコンテナ内でClaude Codeを実行するためのツールです。
 ## 使用方法
 
 ```bash
-claude-container [workspace] [-- claude-options...]
+claude-container [オプション] [ワークスペース] [-- claudeオプション...]
 ```
+
+### オプション
+
+- **--rebuild-container**: コンテナイメージを再ビルド
+- **--remove-container**: コンテナイメージを削除
 
 ### 引数の詳細
 
@@ -61,6 +66,16 @@ claude-container --help
 claude-container -- --dangerously-skip-permissions
 ```
 
+### コンテナ管理の例
+
+```bash
+# コンテナイメージを再ビルド
+claude-container --rebuild-container
+
+# コンテナイメージを削除
+claude-container --remove-container
+```
+
 ### シンボリックリンクでの利用
 
 スクリプトはシンボリックリンクに対応しており、どこからでも実行できます：
@@ -88,6 +103,8 @@ claude-container ~/my-project
 - **多言語対応**: 日本語環境では日本語、それ以外では英語で表示
 - **柔軟な引数処理**: ワークスペース省略可能、`--`区切りでClaudeオプション指定
 - **コンテナランタイム検出**: macOSでは`container`コマンド（利用可能な場合）、その他では`docker`を自動使用
+- **自動イメージビルド**: 初回実行時にコンテナイメージを自動ビルド
+- **コンテナ管理**: 必要に応じてコンテナイメージの再ビルドや削除が可能
 
 ## コンテナランタイム
 

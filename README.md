@@ -21,8 +21,13 @@ A tool for running Claude Code inside Docker containers.
 ### Usage
 
 ```bash
-claude-container [workspace] [-- claude-options...]
+claude-container [options] [workspace] [-- claude-options...]
 ```
+
+#### Options
+
+- **--rebuild-container**: Rebuild the container image
+- **--remove-container**: Remove the container image
 
 #### Argument Details
 
@@ -65,6 +70,16 @@ claude-container --help
 claude-container -- --dangerously-skip-permissions
 ```
 
+#### Container Management Examples
+
+```bash
+# Rebuild container image
+claude-container --rebuild-container
+
+# Remove container image
+claude-container --remove-container
+```
+
 #### Using with Symbolic Links
 
 The script supports symbolic links and can be executed from anywhere:
@@ -92,6 +107,8 @@ claude-container ~/my-project
 - **Multi-language Support**: Japanese in Japanese environments, English otherwise
 - **Flexible Argument Processing**: Optional workspace specification, `--` delimiter for Claude options
 - **Container Runtime Detection**: Automatically uses `container` on macOS (if available) or `docker` elsewhere
+- **Automatic Image Building**: Builds container image on first run
+- **Container Management**: Rebuild and remove container images as needed
 
 #### Container Runtime
 

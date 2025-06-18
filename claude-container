@@ -123,51 +123,52 @@ LOCAL_TZ=$(detect_timezone)
 # Parse arguments
 WORKSPACE_PATH=""
 CLAUDE_ARGS=""
+REBUILD_CONTAINER=false
+REMOVE_CONTAINER=false
 
-# Find position of --
-DOUBLE_DASH_POS=-1
-for i in $(seq 1 $#); do
-    if [ "${!i}" = "--" ]; then
-        DOUBLE_DASH_POS=$i
-        break
-    fi
+# Parse our own options first
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --rebuild-container)
+            REBUILD_CONTAINER=true
+            shift
+            ;;
+        --remove-container)
+            REMOVE_CONTAINER=true
+            shift
+            ;;
+        --)
+            shift
+            CLAUDE_ARGS="$@"
+            break
+            ;;
+        *)
+            # If it's a directory or ".", treat as workspace
+            if [ -z "$WORKSPACE_PATH" ] && ([ -d "$1" ] || [ "$1" = "." ]); then
+                WORKSPACE_PATH=$(realpath "$1")
+                shift
+            else
+                # All remaining arguments go to Claude
+                CLAUDE_ARGS="$@"
+                break
+            fi
+            ;;
+    esac
 done
 
-if [ $DOUBLE_DASH_POS -gt 0 ]; then
-    # If -- is found
-    if [ $DOUBLE_DASH_POS -eq 1 ]; then
-        # If first argument is --, workspace is current directory
-        WORKSPACE_PATH=$(pwd)
-        shift # Remove --
-        CLAUDE_ARGS="$@"
-    else
-        # Arguments before -- are treated as workspace (first one only)
-        WORKSPACE_PATH=$(realpath "$1")
-        shift $DOUBLE_DASH_POS # Remove up to --
-        CLAUDE_ARGS="$@"
-    fi
-else
-    # If -- is not found
-    if [ $# -eq 0 ]; then
-        # No arguments: use current directory
-        WORKSPACE_PATH=$(pwd)
-        CLAUDE_ARGS=""
-    elif [ -d "$1" ] || [ "$1" = "." ]; then
-        # If first argument is a directory
-        WORKSPACE_PATH=$(realpath "$1")
-        shift
-        CLAUDE_ARGS="$@"
-    else
-        # If first argument is not a directory, use current directory
-        WORKSPACE_PATH=$(pwd)
-        CLAUDE_ARGS="$@"
-    fi
+# If no workspace specified, use current directory
+if [ -z "$WORKSPACE_PATH" ]; then
+    WORKSPACE_PATH=$(pwd)
 fi
 
 # Function to display usage information
 show_usage() {
     if [ "$LANG_CODE" = "ja" ]; then
-        echo "使用方法: claude-container [ワークスペース] [-- claudeオプション...]"
+        echo "使用方法: claude-container [オプション] [ワークスペース] [-- claudeオプション...]"
+        echo ""
+        echo "オプション:"
+        echo "   --rebuild-container                                  # コンテナイメージを再ビルド"
+        echo "   --remove-container                                   # コンテナイメージを削除"
         echo ""
         echo "基本的な使用例:"
         echo "   claude-container                                     # カレントディレクトリを使用"
@@ -179,8 +180,16 @@ show_usage() {
         echo "   claude-container . -- --verbose                     # カレントディレクトリ + claudeオプション"
         echo "   claude-container /path -- --model claude-3-opus     # 指定ディレクトリ + claudeオプション"
         echo "   claude-container --help                             # claudeのヘルプを表示"
+        echo ""
+        echo "コンテナ管理の例:"
+        echo "   claude-container --rebuild-container                # イメージを再ビルド"
+        echo "   claude-container --remove-container                 # イメージを削除"
     else
-        echo "Usage: claude-container [workspace] [-- claude-options...]"
+        echo "Usage: claude-container [options] [workspace] [-- claude-options...]"
+        echo ""
+        echo "Options:"
+        echo "   --rebuild-container                                  # Rebuild container image"
+        echo "   --remove-container                                   # Remove container image"
         echo ""
         echo "Basic usage examples:"
         echo "   claude-container                                     # Use current directory"
@@ -192,6 +201,10 @@ show_usage() {
         echo "   claude-container . -- --verbose                     # Current directory + Claude options"
         echo "   claude-container /path -- --model claude-3-opus     # Specified directory + Claude options"
         echo "   claude-container --help                             # Show Claude help"
+        echo ""
+        echo "Container management examples:"
+        echo "   claude-container --rebuild-container                # Rebuild image"
+        echo "   claude-container --remove-container                 # Remove image"
     fi
 }
 
@@ -220,6 +233,92 @@ fi
 
 # Docker image name
 IMAGE_NAME="claude-code"
+
+# Function to check if image exists
+image_exists() {
+    $CONTAINER_CMD images --format "table {{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "^$IMAGE_NAME:latest$"
+}
+
+# Function to build container image
+build_image() {
+    if [ "$LANG_CODE" = "ja" ]; then
+        echo "コンテナイメージをビルドしています..."
+    else
+        echo "Building container image..."
+    fi
+    
+    if [ ! -f "$SCRIPT_DIR/Dockerfile" ]; then
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "エラー: Dockerfileが見つかりません: $SCRIPT_DIR/Dockerfile"
+        else
+            echo "Error: Dockerfile not found: $SCRIPT_DIR/Dockerfile"
+        fi
+        exit 1
+    fi
+    
+    $CONTAINER_CMD build -t "$IMAGE_NAME" "$SCRIPT_DIR"
+    if [ $? -ne 0 ]; then
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "エラー: コンテナイメージのビルドに失敗しました"
+        else
+            echo "Error: Failed to build container image"
+        fi
+        exit 1
+    fi
+    
+    if [ "$LANG_CODE" = "ja" ]; then
+        echo "コンテナイメージのビルドが完了しました"
+    else
+        echo "Container image build completed"
+    fi
+}
+
+# Function to remove container image
+remove_image() {
+    if image_exists; then
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "コンテナイメージを削除しています..."
+        else
+            echo "Removing container image..."
+        fi
+        $CONTAINER_CMD rmi "$IMAGE_NAME" 2>/dev/null
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "コンテナイメージを削除しました"
+        else
+            echo "Container image removed"
+        fi
+    else
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "コンテナイメージが見つかりません: $IMAGE_NAME"
+        else
+            echo "Container image not found: $IMAGE_NAME"
+        fi
+    fi
+}
+
+# Handle container management options
+if [ "$REMOVE_CONTAINER" = true ]; then
+    remove_image
+    exit 0
+fi
+
+if [ "$REBUILD_CONTAINER" = true ]; then
+    if image_exists; then
+        remove_image
+    fi
+    build_image
+    exit 0
+fi
+
+# Check if image exists, build if not
+if ! image_exists; then
+    if [ "$LANG_CODE" = "ja" ]; then
+        echo "コンテナイメージが見つかりません。初回ビルドを実行します..."
+    else
+        echo "Container image not found. Building for the first time..."
+    fi
+    build_image
+fi
 
 # Container name (generated from workspace path with timestamp)
 TIMESTAMP=$(date +%s)
