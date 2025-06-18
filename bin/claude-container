@@ -3,6 +3,26 @@
 # Get the project root directory (parent of bin directory)
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/.." && pwd)"
 
+# Check if script is executed via symlink and show hint
+show_symlink_hint() {
+    if [ ! -L "$0" ]; then
+        local script_name=$(basename "$0")
+        if [ "$LANG_CODE" = "ja" ]; then
+            echo "💡 ヒント: このスクリプトをシンボリックリンクで$PATHに追加すると、どこからでも実行できて便利です:"
+            echo "   sudo ln -s \"$(readlink -f "$0")\" /usr/local/bin/$script_name"
+            echo "   または、お好みの場所に:"
+            echo "   ln -s \"$(readlink -f "$0")\" ~/.local/bin/$script_name"
+            echo ""
+        else
+            echo "💡 Hint: Adding this script to your PATH via symlink makes it convenient to run from anywhere:"
+            echo "   sudo ln -s \"$(readlink -f "$0")\" /usr/local/bin/$script_name"
+            echo "   Or to your preferred location:"
+            echo "   ln -s \"$(readlink -f "$0")\" ~/.local/bin/$script_name"
+            echo ""
+        fi
+    fi
+}
+
 # Detect language setting early for error messages
 detect_language() {
     if [[ "$LANG" =~ ^ja ]]; then
@@ -337,6 +357,9 @@ else
     echo "Container name: $CONTAINER_NAME"
     echo "Timezone: $LOCAL_TZ"
 fi
+
+# Show symlink hint if running directly (not via symlink)
+show_symlink_hint
 
 # Mount entire docker folder
 MOUNT_OPTIONS="-v \"$SCRIPT_DIR/docker:/home/node\""
