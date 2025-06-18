@@ -51,8 +51,6 @@ detect_container_runtime() {
     fi
 }
 
-# Set container runtime command (can be overridden via environment variable)
-CONTAINER_CMD="${CONTAINER_RUNTIME:-$(detect_container_runtime)}"
 
 # Detect local timezone
 detect_timezone() {
@@ -145,6 +143,7 @@ WORKSPACE_PATH=""
 CLAUDE_ARGS=""
 REBUILD_CONTAINER=false
 REMOVE_CONTAINER=false
+CUSTOM_CONTAINER_CMD=""
 
 # Parse our own options first
 while [[ $# -gt 0 ]]; do
@@ -156,6 +155,18 @@ while [[ $# -gt 0 ]]; do
         --remove-container)
             REMOVE_CONTAINER=true
             shift
+            ;;
+        --docker)
+            if [ -z "$2" ]; then
+                if [ "$LANG_CODE" = "ja" ]; then
+                    echo "エラー: --dockerオプションにはコマンドを指定してください"
+                else
+                    echo "Error: --docker option requires a command"
+                fi
+                exit 1
+            fi
+            CUSTOM_CONTAINER_CMD="$2"
+            shift 2
             ;;
         --)
             shift
@@ -176,6 +187,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Set container runtime command (can be overridden via environment variable or --docker option)
+if [ -n "$CUSTOM_CONTAINER_CMD" ]; then
+    CONTAINER_CMD="$CUSTOM_CONTAINER_CMD"
+else
+    CONTAINER_CMD="${CONTAINER_RUNTIME:-$(detect_container_runtime)}"
+fi
+
 # If no workspace specified, use current directory
 if [ -z "$WORKSPACE_PATH" ]; then
     WORKSPACE_PATH=$(pwd)
@@ -189,6 +207,7 @@ show_usage() {
         echo "オプション:"
         echo "   --rebuild-container                                  # コンテナイメージを再ビルド"
         echo "   --remove-container                                   # コンテナイメージを削除"
+        echo "   --docker <コマンド>                                   # 使用するコンテナコマンドを指定"
         echo ""
         echo "基本的な使用例:"
         echo "   claude-container                                     # カレントディレクトリを使用"
@@ -204,12 +223,18 @@ show_usage() {
         echo "コンテナ管理の例:"
         echo "   claude-container --rebuild-container                # イメージを再ビルド"
         echo "   claude-container --remove-container                 # イメージを削除"
+        echo ""
+        echo "カスタムコンテナコマンドの例:"
+        echo "   claude-container --docker podman                    # Podmanを使用"
+        echo "   claude-container --docker \"docker -H tcp://...\"    # リモートDockerを使用"
+        echo "   claude-container --docker \"my-container-runtime\"   # カスタムランタイムを使用"
     else
         echo "Usage: claude-container [options] [workspace] [-- claude-options...]"
         echo ""
         echo "Options:"
         echo "   --rebuild-container                                  # Rebuild container image"
         echo "   --remove-container                                   # Remove container image"
+        echo "   --docker <command>                                   # Specify container command to use"
         echo ""
         echo "Basic usage examples:"
         echo "   claude-container                                     # Use current directory"
@@ -225,6 +250,11 @@ show_usage() {
         echo "Container management examples:"
         echo "   claude-container --rebuild-container                # Rebuild image"
         echo "   claude-container --remove-container                 # Remove image"
+        echo ""
+        echo "Custom container command examples:"
+        echo "   claude-container --docker podman                    # Use Podman"
+        echo "   claude-container --docker \"docker -H tcp://...\"    # Use remote Docker"
+        echo "   claude-container --docker \"my-container-runtime\"   # Use custom runtime"
     fi
 }
 
