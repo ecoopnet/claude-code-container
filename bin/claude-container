@@ -383,7 +383,7 @@ trap cleanup_container TERM
 MOUNT_OPTIONS="-v \"$SCRIPT_DIR/docker:/home/node\""
 
 # Execute container
-eval "$CONTAINER_CMD run -it \
+eval "$CONTAINER_CMD run -it --rm \
     --name \"$CONTAINER_NAME\" \
     $MOUNT_OPTIONS \
     -v \"$WORKSPACE_PATH:/workspace\" \
