@@ -1,94 +1,98 @@
 # Claude Code Container
 
-Dockerコンテナ内でClaude Codeを実行するためのツールです。
+[English](#english) | [日本語](README_ja.md)
 
-## セットアップ
+## English
 
-1. **Container System を開始**
+A tool for running Claude Code inside Docker containers.
+
+### Setup
+
+1. **Start Container System**
    ```bash
    container system start
    ```
 
-2. **Dockerイメージをビルド**
+2. **Build Docker Image**
    ```bash
    ./build.sh
    ```
 
-## 使用方法
+### Usage
 
 ```bash
 claude-container [workspace] [-- claude-options...]
 ```
 
-### 引数の詳細
+#### Argument Details
 
-- **workspace** (省略可能): 作業ディレクトリのパス
-  - 省略時: カレントディレクトリを使用
-  - `.`: カレントディレクトリを明示的に指定
-  - `/path/to/project`: 特定のディレクトリを指定
-- **--**: Claude オプションとの区切り文字
-- **claude-options**: Claude Code に直接渡されるオプション
+- **workspace** (optional): Working directory path
+  - If omitted: Use current directory
+  - `.`: Explicitly specify current directory
+  - `/path/to/project`: Specify a specific directory
+- **--**: Delimiter between workspace and Claude options
+- **claude-options**: Options passed directly to Claude Code
 
-### 基本的な使用例
+#### Basic Usage Examples
 
 ```bash
-# カレントディレクトリを使用
+# Use current directory
 claude-container
 
-# カレントディレクトリを明示的に指定
+# Explicitly specify current directory
 claude-container .
 
-# 特定のディレクトリを指定
+# Specify a specific directory
 claude-container /path/to/project
 ```
 
-### Claudeオプション付きの使用例
+#### Usage with Claude Options
 
 ```bash
-# カレントディレクトリ + Claudeオプション
+# Current directory + Claude options
 claude-container -- --model claude-3-opus-20240229
 
-# カレントディレクトリを明示 + Claudeオプション
+# Current directory + Claude options (explicit)
 claude-container . -- --verbose
 
-# 特定のディレクトリ + Claudeオプション
+# Specific directory + Claude options
 claude-container /path/to/project -- --model claude-3-opus
 
-# Claudeのヘルプを表示
+# Show Claude help
 claude-container --help
 
-# 危険な権限をスキップ
+# Skip dangerous permissions
 claude-container -- --dangerously-skip-permissions
 ```
 
-### シンボリックリンクでの利用
+#### Using with Symbolic Links
 
-スクリプトはシンボリックリンクに対応しており、どこからでも実行できます：
+The script supports symbolic links and can be executed from anywhere:
 
 ```bash
-# PATHの通ったディレクトリにシンボリックリンクを作成
+# Create symbolic link in PATH directory
 sudo ln -s /opt/ai-agents/claude-code-container/claude-container /usr/local/bin/claude-container
 
-# どこからでも実行可能
+# Execute from anywhere
 cd ~/my-project
 claude-container
 
-# または別の場所から
+# Or from another location
 claude-container ~/my-project
 ```
 
-**注意**: シンボリックリンクを使用しても、設定ファイル（`.claude`など）は元のスクリプトディレクトリ内の`docker/`フォルダから自動的に読み込まれます。
+**Note**: Even when using symbolic links, configuration files (`.claude`, etc.) are automatically loaded from the `docker/` folder in the original script directory.
 
-## 機能
+#### Features
 
-- **自動設定**: ローカルのClaude設定（`.claude`ディレクトリ）を自動マウント
-- **タイムゾーン検出**: ローカル環境のタイムゾーンを自動検出（Windows/macOS/Linux対応）
-- **シンボリックリンク対応**: スクリプトをどこに配置・リンクしても動作
-- **設定永続化**: コンテナ内での設定変更がローカルに保存
-- **多言語対応**: 日本語環境では日本語、それ以外では英語で表示
-- **柔軟な引数処理**: ワークスペース省略可能、`--`区切りでClaudeオプション指定
+- **Auto Configuration**: Automatically mount local Claude settings (`.claude` directory)
+- **Timezone Detection**: Auto-detect local timezone (Windows/macOS/Linux support)
+- **Symbolic Link Support**: Works regardless of script location or linking
+- **Configuration Persistence**: Changes made inside container are saved locally
+- **Multi-language Support**: Japanese in Japanese environments, English otherwise
+- **Flexible Argument Processing**: Optional workspace specification, `--` delimiter for Claude options
 
-## 参考
+#### Reference
 
-セットアップの詳細については以下を参照してください：
+For detailed setup instructions, see:
 https://zenn.dev/schroneko/articles/claude-code-on-apple-container
