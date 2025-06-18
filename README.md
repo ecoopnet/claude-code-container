@@ -8,15 +8,15 @@ A tool for running Claude Code inside Docker containers.
 
 ### Setup
 
-1. **Start Container System**
+1. **Start Container System** (if using container runtime)
    ```bash
    container system start
    ```
 
-2. **Build Docker Image**
-   ```bash
-   ./build.sh
-   ```
+2. **Ready to Use**
+   The container image will be automatically built on first run. No manual build required!
+   
+   Simply run `claude-container` and the setup will complete automatically.
 
 ### Usage
 
@@ -100,6 +100,7 @@ claude-container ~/my-project
 
 #### Features
 
+- **Zero Manual Setup**: Automatically builds container image on first run
 - **Auto Configuration**: Automatically mount local Claude settings (`.claude` directory)
 - **Timezone Detection**: Auto-detect local timezone (Windows/macOS/Linux support)
 - **Symbolic Link Support**: Works regardless of script location or linking
@@ -107,7 +108,6 @@ claude-container ~/my-project
 - **Multi-language Support**: Japanese in Japanese environments, English otherwise
 - **Flexible Argument Processing**: Optional workspace specification, `--` delimiter for Claude options
 - **Container Runtime Detection**: Automatically uses `container` on macOS (if available) or `docker` elsewhere
-- **Automatic Image Building**: Builds container image on first run
 - **Container Management**: Rebuild and remove container images as needed
 
 #### Container Runtime
