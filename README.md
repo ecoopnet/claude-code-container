@@ -6,6 +6,12 @@
 
 A tool for running Claude Code inside Docker containers.
 
+### Demo
+
+![Demo Animation](sample.gif)
+
+*Animation showing Claude Code Container in action*
+
 ### Setup
 
 1. **Start Container System** (if using container runtime)
@@ -168,12 +174,6 @@ alias g="git"' >> docker/.zshrc
 ```
 
 This makes the container environment feel like your local development setup!
-
-#### Demo
-
-![Demo Animation](sample.gif)
-
-*Animation showing Claude Code Container in action*
 
 #### Features
 
